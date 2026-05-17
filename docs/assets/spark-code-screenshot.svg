@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="640" viewBox="0 0 1180 640" role="img" aria-label="Generated Spark code screenshot">
+  <rect width="1180" height="640" rx="24" fill="#111827"/>
+  <rect x="46" y="42" width="1088" height="556" rx="18" fill="#0B1220" stroke="#334155"/>
+  <rect x="46" y="42" width="1088" height="58" rx="18" fill="#1E293B"/>
+  <circle cx="82" cy="72" r="8" fill="#EF4444"/>
+  <circle cx="110" cy="72" r="8" fill="#F59E0B"/>
+  <circle cx="138" cy="72" r="8" fill="#22C55E"/>
+  <text x="184" y="78" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" font-weight="700" fill="#E2E8F0">generated_remediation.py</text>
+
+  <text x="78" y="144" font-family="Consolas,Menlo,monospace" font-size="18" fill="#93C5FD">from</text>
+  <text x="132" y="144" font-family="Consolas,Menlo,monospace" font-size="18" fill="#E5E7EB"> pyspark.sql.functions </text>
+  <text x="390" y="144" font-family="Consolas,Menlo,monospace" font-size="18" fill="#93C5FD">import</text>
+  <text x="468" y="144" font-family="Consolas,Menlo,monospace" font-size="18" fill="#E5E7EB"> col, trim, to_date</text>
+
+  <text x="78" y="198" font-family="Consolas,Menlo,monospace" font-size="18" fill="#CBD5E1">df = df.withColumnRenamed(</text>
+  <text x="350" y="198" font-family="Consolas,Menlo,monospace" font-size="18" fill="#FDE68A">"mail"</text>
+  <text x="420" y="198" font-family="Consolas,Menlo,monospace" font-size="18" fill="#CBD5E1">, </text>
+  <text x="446" y="198" font-family="Consolas,Menlo,monospace" font-size="18" fill="#FDE68A">"email"</text>
+  <text x="528" y="198" font-family="Consolas,Menlo,monospace" font-size="18" fill="#CBD5E1">)</text>
+
+  <text x="78" y="246" font-family="Consolas,Menlo,monospace" font-size="18" fill="#CBD5E1">df = df.withColumn(</text>
+  <text x="278" y="246" font-family="Consolas,Menlo,monospace" font-size="18" fill="#FDE68A">"birth_date"</text>
+  <text x="410" y="246" font-family="Consolas,Menlo,monospace" font-size="18" fill="#CBD5E1">, to_date(col(</text>
+  <text x="556" y="246" font-family="Consolas,Menlo,monospace" font-size="18" fill="#FDE68A">"birth_date"</text>
+  <text x="688" y="246" font-family="Consolas,Menlo,monospace" font-size="18" fill="#CBD5E1">), </text>
+  <text x="730" y="246" font-family="Consolas,Menlo,monospace" font-size="18" fill="#FDE68A">"yyyy-MM-dd"</text>
+  <text x="862" y="246" font-family="Consolas,Menlo,monospace" font-size="18" fill="#CBD5E1">))</text>
+
+  <text x="78" y="318" font-family="Consolas,Menlo,monospace" font-size="18" fill="#CBD5E1">invalid_customer_id = df.filter(</text>
+  <text x="390" y="318" font-family="Consolas,Menlo,monospace" font-size="18" fill="#E5E7EB">col(</text>
+  <text x="434" y="318" font-family="Consolas,Menlo,monospace" font-size="18" fill="#FDE68A">"customer_id"</text>
+  <text x="578" y="318" font-family="Consolas,Menlo,monospace" font-size="18" fill="#E5E7EB">).isNull()</text>
+  <text x="704" y="318" font-family="Consolas,Menlo,monospace" font-size="18" fill="#CBD5E1">)</text>
+
+  <text x="78" y="366" font-family="Consolas,Menlo,monospace" font-size="18" fill="#CBD5E1">valid_amount = df.filter(col(</text>
+  <text x="358" y="366" font-family="Consolas,Menlo,monospace" font-size="18" fill="#FDE68A">"amount"</text>
+  <text x="448" y="366" font-family="Consolas,Menlo,monospace" font-size="18" fill="#CBD5E1">) &gt;= </text>
+  <text x="516" y="366" font-family="Consolas,Menlo,monospace" font-size="18" fill="#FCA5A5">0</text>
+  <text x="532" y="366" font-family="Consolas,Menlo,monospace" font-size="18" fill="#CBD5E1">)</text>
+
+  <rect x="78" y="438" width="988" height="84" rx="14" fill="#052E2B" stroke="#0F766E"/>
+  <text x="108" y="472" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="17" font-weight="700" fill="#CCFBF1">Generated remediation</text>
+  <text x="108" y="500" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" fill="#99F6E4">The agent keeps invalid rows separate so pipelines can fail fast, quarantine, or notify the producer.</text>
+</svg>

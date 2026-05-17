@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="680" viewBox="0 0 1180 680" role="img" aria-label="DataContract Guard architecture">
+  <rect width="1180" height="680" rx="24" fill="#F8FAFC"/>
+  <text x="52" y="62" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="34" font-weight="700" fill="#0F172A">DataContract Guard architecture</text>
+  <text x="52" y="94" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="17" fill="#475569">AI orchestration over deterministic data quality and contract checks</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#475569"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0F172A" flood-opacity="0.13"/>
+    </filter>
+  </defs>
+
+  <rect x="430" y="130" width="320" height="72" rx="14" fill="#FFFFFF" stroke="#CBD5E1" filter="url(#shadow)"/>
+  <text x="590" y="158" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="18" font-weight="700" fill="#0F172A">User / Web UI / API</text>
+  <text x="590" y="182" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" fill="#64748B">CSV, Parquet, JSON, YAML contract, Iceberg table</text>
+
+  <line x1="590" y1="202" x2="590" y2="248" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="390" y="250" width="400" height="84" rx="18" fill="#111827" filter="url(#shadow)"/>
+  <text x="590" y="282" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="21" font-weight="700" fill="#FFFFFF">Agent Orchestrator</text>
+  <text x="590" y="309" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" fill="#CBD5E1">routes tasks, keeps traces, calls specialist agents</text>
+
+  <line x1="590" y1="334" x2="590" y2="374" stroke="#475569" stroke-width="3"/>
+  <line x1="210" y1="374" x2="970" y2="374" stroke="#475569" stroke-width="3"/>
+  <line x1="210" y1="374" x2="210" y2="408" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="590" y1="374" x2="590" y2="408" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="970" y1="374" x2="970" y2="408" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="70" y="410" width="280" height="104" rx="16" fill="#FFFFFF" stroke="#CBD5E1" filter="url(#shadow)"/>
+  <text x="210" y="442" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="19" font-weight="700" fill="#0F172A">Schema Agent</text>
+  <text x="210" y="468" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" fill="#475569">Infer schema</text>
+  <text x="210" y="492" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" fill="#64748B">CSV / Parquet / JSON</text>
+
+  <rect x="450" y="410" width="280" height="104" rx="16" fill="#FFFFFF" stroke="#CBD5E1" filter="url(#shadow)"/>
+  <text x="590" y="442" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="19" font-weight="700" fill="#0F172A">Quality Agent</text>
+  <text x="590" y="468" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" fill="#475569">Run data checks</text>
+  <text x="590" y="492" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" fill="#64748B">nulls, formats, domains, min/max</text>
+
+  <rect x="830" y="410" width="280" height="104" rx="16" fill="#FFFFFF" stroke="#CBD5E1" filter="url(#shadow)"/>
+  <text x="970" y="442" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="19" font-weight="700" fill="#0F172A">Contract Agent</text>
+  <text x="970" y="468" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" fill="#475569">Compare YAML</text>
+  <text x="970" y="492" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" fill="#64748B">missing, renamed, types, extras</text>
+
+  <line x1="210" y1="514" x2="210" y2="558" stroke="#475569" stroke-width="3"/>
+  <line x1="590" y1="514" x2="590" y2="558" stroke="#475569" stroke-width="3"/>
+  <line x1="970" y1="514" x2="970" y2="558" stroke="#475569" stroke-width="3"/>
+  <line x1="210" y1="558" x2="970" y2="558" stroke="#475569" stroke-width="3"/>
+  <line x1="590" y1="558" x2="590" y2="588" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="330" y="590" width="520" height="60" rx="16" fill="#0F766E" filter="url(#shadow)"/>
+  <text x="590" y="616" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="19" font-weight="700" fill="#FFFFFF">Report Generator + Code Generator</text>
+  <text x="590" y="638" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" fill="#CCFBF1">report, recommendations, PySpark remediation snippets</text>
+</svg>
