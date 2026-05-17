@@ -1,89 +1,244 @@
-<!-- copied from docs/ARCHITECTURE.md -->
+# Architecture
 
-# Data Contract Agent — Architecture
+DataContract Guard is designed as a modular validation system with an agent-style runtime.
 
-This document describes the runtime architecture and the schema model used by DataContract Guard.
+The core principle is simple:
 
-**High-level components**
+> The deterministic validation engine decides `PASS` or `FAIL`. The agent layer explains, prioritizes, and recommends.
 
-- Agent Orchestrator: routes a user evaluation request to specialized agents and aggregates results.
-- Schema Agent: infers a schema from source files (CSV/JSON/Parquet).
-- Contract Agent: loads the contract (YAML/JSON) and compares it to inferred schema.
-- Quality Agent: runs row-level data quality checks (formats, patterns, domains, nullability).
-- Report Generator: merges schema and quality findings and prepares recommendations and code snippets.
-- LLM Explanation Agent: generates human-friendly explanations and supplier messages; optionally enriched by a Document Retriever (ChromaDB).
+---
 
-Optional components:
+## High-Level Flow
 
-- Document Retriever (ChromaDB): local vector store that indexes `docs/*.md` and provides contextual references to the explanation agent.
-
-```mermaid
-flowchart LR
-  A[API / CLI] --> B(Agent Orchestrator)
-  B --> C[Schema Agent]
-  B --> D[Contract Agent]
-  B --> E[Quality Agent]
-  C --> F[Report Generator]
-  D --> F
-  E --> F
-  F --> G[LLM Explanation Agent]
-  G -->|optional| H[Document Retriever - Chroma]
-  G --> I[Output: JSON/Markdown]
+```text
+User / API / CLI
+      ↓
+Agent Orchestrator
+      ├── Schema Agent
+      ├── Contract Agent
+      ├── Quality Agent
+      ├── LLM Explanation Agent
+      └── Report Generator
+      ↓
+Validation Report + Recommendations + PySpark Fix
 ```
 
-**Deployment notes**
+---
 
-- The runtime is dependency-light; vector search is optional. If `chromadb` and `sentence-transformers` are installed and `DATA_CONTRACT_ENABLE_VECTOR_STORE=true`, the agent will index `docs/*.md` into a local Chroma collection and will include short document excerpts in LLM prompts.
-- The deterministic validation engine remains authoritative for the `PASS`/`FAIL` status; LLMs only generate explanations and remediation suggestions.
+## Components
 
-See `SCHEMA.md` for the data model details and example payloads.
+### Agent Orchestrator
 
-## MCP Connectors (GitHub/GitLab, S3, Databases, Slack/Jira)
+Coordinates the validation workflow.
 
-This project can integrate with external connectors in two ways: directly (each connector implemented in the agent) or via standardized MCP servers that act as connector adapters.
+Responsibilities:
 
-MCP (Managed Connector Proxy) servers standardize access to third-party systems and hide auth/config complexity. The DataContract Guard can use existing internal MCP servers to read contracts, list incoming files, query schemas, or emit alerts.
+- Receive the validation request
+- Load the source schema or data file
+- Load the contract
+- Call specialized agents
+- Merge results into a final report
+- Keep execution traces
 
-Benefits of using MCP:
+---
 
-- Centralized credentials and secrets management (no hard-coded tokens in the agent).
-- Reusable connector logic across agents and projects.
-- Standardized API (same high-level calls for Git, object storage, databases, messaging).
-- Easier auditing, rate-limiting and observability at connector boundary.
+### Schema Agent
 
-Example flows
+Responsible for understanding the received data structure.
 
-With MCP (recommended):
+Responsibilities:
 
-```mermaid
-flowchart LR
-  A[DataContract Guard] --> B[MCP Git Connector]
-  B --> C[GitHub/GitLab stores YAML contracts]
-  A --> D[MCP Object Storage]
-  D --> E[S3 / MinIO incoming files]
-  A --> F[MCP Schema Catalog]
-  F --> G[Postgres / Snowflake]
-  A --> H[MCP Issue/Alert]
-  H --> I[Slack / Jira]
+- Read a JSON schema
+- Infer a schema from CSV
+- Infer a schema from Parquet when supported
+- Extract column names and detected types
+- Provide basic profiling metadata
+
+---
+
+### Contract Agent
+
+Responsible for reading and validating the expected contract.
+
+Responsibilities:
+
+- Parse YAML contracts
+- Validate contract structure
+- Normalize contract column definitions
+- Extract expected types and quality rules
+
+---
+
+### Quality Agent
+
+Responsible for applying data quality rules.
+
+Responsibilities:
+
+- Check required columns
+- Check missing values
+- Check regex constraints
+- Check allowed values
+- Check min/max values
+- Check date and timestamp formats
+
+---
+
+### LLM Explanation Agent
+
+Optional component used to enrich deterministic validation output.
+
+Responsibilities:
+
+- Explain issues in natural language
+- Identify likely producer-side causes
+- Describe business and technical impacts
+- Generate remediation plans
+- Generate messages for data producers
+
+Important: this agent must not be the source of truth for validation status.
+
+---
+
+### Report Generator
+
+Responsible for formatting validation results.
+
+Responsibilities:
+
+- Generate JSON reports
+- Generate Markdown reports
+- Summarize issues
+- Add recommendations
+- Add generated remediation code
+
+---
+
+## Recommended Package Structure
+
+```text
+datacontract-guard/
+│
+├── app/
+│   ├── main.py
+│   ├── routes/
+│   │   └── validations.py
+│   └── services/
+│       └── validation_service.py
+│
+├── contract_agent/
+│   ├── agents/
+│   │   ├── orchestrator.py
+│   │   ├── schema_agent.py
+│   │   ├── contract_agent.py
+│   │   ├── quality_agent.py
+│   │   ├── report_agent.py
+│   │   ├── code_generator.py
+│   │   └── llm_explanation_agent.py
+│   │
+│   ├── core/
+│   │   ├── contract.py
+│   │   ├── models.py
+│   │   ├── data_quality.py
+│   │   ├── explainer.py
+│   │   └── reporting.py
+│   │
+│   ├── adapters/
+│   │   ├── schema_reader.py
+│   │   └── mini_yaml.py
+│   │
+│   ├── enterprise/
+│   │   ├── settings.py
+│   │   ├── security.py
+│   │   ├── logging.py
+│   │   ├── runtime.py
+│   │   ├── tracing.py
+│   │   └── costs.py
+│   │
+│   ├── cli.py
+│   └── evaluation.py
+│
+├── examples/
+├── docs/
+├── tests/
+├── Dockerfile
+├── docker-compose.yml
+└── pyproject.toml
 ```
 
-Without MCP (each connector embedded in the agent):
+---
 
-```mermaid
-flowchart LR
-  A[DataContract Guard] --> B[GitHub connector]
-  A --> C[S3 connector]
-  A --> D[Postgres / Snowflake connector]
-  A --> E[Slack connector]
-  A --> F[Jira connector]
+## Design Principles
+
+### 1. Deterministic First
+
+Validation must be reproducible. The system should always return the same result for the same input.
+
+The LLM should explain and recommend, not decide the final validation status.
+
+---
+
+### 2. Agent-Assisted, Not Agent-Only
+
+Agents are used to organize responsibilities:
+
+- Schema Agent
+- Contract Agent
+- Quality Agent
+- Report Agent
+- Explanation Agent
+
+This improves maintainability and makes the system easier to extend.
+
+---
+
+### 3. API, CLI, and CI/CD Friendly
+
+The same validation engine should be usable from:
+
+- CLI
+- FastAPI
+- Docker
+- GitLab CI
+- Airflow
+- Future UI
+
+---
+
+### 4. Secure by Default
+
+The system should avoid unsafe filesystem access, uncontrolled LLM actions, and secret exposure.
+
+Recommended safeguards:
+
+- Allowed root directories
+- Max file size
+- Read-only container filesystem
+- No direct production writes
+- Explicit human approval for sensitive actions
+
+---
+
+## Future Architecture
+
+```text
+Frontend UI
+    ↓
+FastAPI Backend
+    ↓
+Agent Orchestrator
+    ↓
+Deterministic Validation Engine
+    ↓
+LLM Explanation Agent
+    ↓
+RAG Knowledge Base
+    ↓
+Connectors / MCP Servers
+    ├── GitHub / GitLab
+    ├── S3
+    ├── Glue Catalog
+    ├── Iceberg Catalog
+    ├── Slack / Teams
+    └── Jira
 ```
-
-Operational note: when MCP servers exist in your platform, prefer calling them. The agent's adapters should implement a thin interface so the same business logic can call either the MCP endpoint or a local connector implementation.
-
-Security and deployment
-
-- Use short-lived service tokens for MCP-to-third-party calls.
-- Scope MCP permissions narrowly (read-only for contracts, write to specific issue channels for alerts).
-- Prefer internal network connectivity between the agent and MCP servers (VPC, service mesh).
-
-See `guides/mcp_connectors.md` for implementation guidance and an example connector interface.

@@ -1,62 +1,106 @@
-<!-- copied from docs/MCP_CONNECTORS.md -->
+# MCP Connectors
 
-# MCP Connectors — Guide and example adapter
+This document describes how DataContract Guard can evolve toward connector-based integrations.
 
-This guide describes how to use MCP (Managed Connector Proxy) servers with DataContract Guard and provides a minimal adapter contract to implement connectors or to call MCP endpoints.
+---
 
-Purpose
+## Important Naming Note
 
-- MCP servers expose a small, consistent API to interact with third-party systems: Git repos (contracts), object stores (incoming files), databases (schema/catalog), and issue/alerting services (Slack/Jira).
-- The agent code calls MCP endpoints rather than implementing each protocol directly.
+In modern AI systems, MCP usually means **Model Context Protocol**.
 
-Recommended MCP API surface (example)
+Avoid using MCP to mean another internal concept such as “Managed Connector Proxy”, because it can create confusion.
 
-- GET /contracts?repo=<repo>&path=<path>
-  - returns: list of contract file metadata and content
-- GET /objects?bucket=<bucket>&prefix=<prefix>
-  - returns: list of incoming files with presigned URLs or internal object ids
-- GET /schema?datasource=<name>&table=<table>
-  - returns: schema JSON compatible with `contract_agent` `Schema` model
-- POST /alerts
-  - body: { "channel": "slack:#alerts", "title": "DataContract guard", "text": "..." }
+Recommended terms:
 
-Example adapter interface (Python)
+- `Connector Gateway`
+- `Data Connector Proxy`
+- `Integration Layer`
+- Or adopt the real Model Context Protocol standard
 
-Place adapters under `contract_agent/adapters/mcp_adapter.py`.
+---
 
-```python
-from typing import Protocol, Iterable
-from pathlib import Path
+## Why Connectors?
 
-class ContractFile(Protocol):
-    path: str
-    content: str
+A production data contract agent should connect to systems where data and contracts live.
 
-class MCPAdapter(Protocol):
-    def list_contracts(self, repo: str, path: str) -> Iterable[ContractFile]:
-        ...
+Useful integrations:
 
-    def list_objects(self, bucket: str, prefix: str) -> list[dict]:
-        ...
+- GitHub / GitLab for contracts
+- S3 for incoming files
+- PostgreSQL / Snowflake / BigQuery for schemas
+- AWS Glue Catalog for metadata
+- Iceberg Catalog for table schemas
+- Slack / Teams for alerts
+- Jira for issue creation
 
-    def get_schema(self, datasource: str, table: str) -> dict:
-        ...
+---
 
-    def create_alert(self, channel: str, title: str, message: str) -> dict:
-        ...
+## Connector-Based Flow
+
+```text
+User asks: validate customers dataset
+        ↓
+Agent Orchestrator
+        ↓
+Connector: GitHub/GitLab → read contract YAML
+        ↓
+Connector: S3 → read latest incoming file
+        ↓
+Validation Engine
+        ↓
+Connector: Slack/Jira → notify or create issue
 ```
 
-Integration points in DataContract Guard
+---
 
-- Replace direct connector calls with an adapter instance created at startup from configuration (env var `DATA_CONTRACT_MCP_URL` or local adapters if MCP is not available).
-- The orchestrator or `enterprise.runtime` should accept an `mcp_adapter` optional parameter and pass it to agents that need external data (e.g., `SchemaAgent`, `ReportGeneratorAgent`).
+## Example Connector Interface
 
-Deployment examples
+```python
+class ContractRepository:
+    def get_contract(self, dataset_name: str, version: str | None = None) -> str:
+        raise NotImplementedError
 
-- Kubernetes: deploy MCP servers as internal services; configure the agent via `DATA_CONTRACT_MCP_URL=http://mcp.cluster.svc`.
-- On-prem: run MCP as a small Flask/FastAPI service with corporate credentials for Git/S3/DB access.
 
-Notes on fallback
+class DataSourceRepository:
+    def get_latest_sample(self, dataset_name: str) -> bytes:
+        raise NotImplementedError
+```
 
-- If MCP is unavailable, the adapter should fall back to local connectors implemented in `contract_agent/adapters/`.
-- Keep the business logic independent from transport: implement thin adapters that return the same structures either way.
+---
+
+## Future Model Context Protocol Integration
+
+With MCP, the agent could use external MCP servers such as:
+
+```text
+MCP GitHub Server
+MCP Filesystem Server
+MCP PostgreSQL Server
+MCP Slack Server
+MCP Jira Server
+```
+
+Target architecture:
+
+```text
+DataContract Guard Agent
+        ↓
+MCP Client
+        ↓
+MCP Servers
+        ├── GitHub
+        ├── S3 / Filesystem
+        ├── PostgreSQL
+        ├── Slack
+        └── Jira
+```
+
+---
+
+## Security Recommendations
+
+- Use read-only access by default
+- Require approval before creating tickets or sending alerts
+- Never expose credentials to the LLM
+- Scope connector permissions per workspace
+- Log connector calls with trace IDs
