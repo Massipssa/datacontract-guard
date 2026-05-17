@@ -1,0 +1,7 @@
+{
+  "name": "datasource.table",
+  "columns": [
+    {"name": "id", "type": "integer"},
+    {"name": "name", "type": "string"}
+  ]
+}

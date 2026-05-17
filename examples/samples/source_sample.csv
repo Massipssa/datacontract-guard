@@ -1,0 +1,3 @@
+customer_id,email,created_at,marketing_opt_in
+1001,alice@example.com,2026-05-17T10:00:00Z,true
+1002,bob@example.com,2026-05-17T11:00:00Z,false

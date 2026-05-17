@@ -1,0 +1,44 @@
+name: supplier_payment_contract
+version: 1.0.0
+owner: finance-data
+columns:
+  - name: customer_id
+    type: long
+    required: true
+    description: Stable customer identifier
+  - name: email
+    type: string
+    required: true
+    pattern: ^[^@]+@[^@]+\.[^@]+$
+    description: Customer email address
+  - name: birth_date
+    type: date
+    required: true
+    format: "%Y-%m-%d"
+    description: Birth date in ISO format
+  - name: amount
+    type: decimal
+    required: true
+    description: Payment amount
+name: supplier_payment_contract
+version: 1.0.0
+owner: finance-data
+columns:
+  - name: customer_id
+    type: long
+    required: true
+    description: Stable customer identifier
+  - name: email
+    type: string
+    required: true
+    pattern: ^[^@]+@[^@]+\.[^@]+$
+    description: Customer email address
+  - name: birth_date
+    type: date
+    required: true
+    format: "%Y-%m-%d"
+    description: Birth date in ISO format
+  - name: amount
+    type: decimal
+    required: true
+    description: Payment amount

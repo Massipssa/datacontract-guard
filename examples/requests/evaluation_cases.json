@@ -1,0 +1,8 @@
+[
+  {
+    "sourceSchemaPath": "examples/schemas/source_schema.json",
+    "contractPath": "examples/contracts/customer_contract.yaml",
+    "sourceName": "customers",
+    "description": "Customers onboarding sample"
+  }
+]

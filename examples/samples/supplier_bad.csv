@@ -1,0 +1,6 @@
+customer_id,mail,birth_date,amount
+123,test@gmail.com,01/01/1990,25.5
+124,invalid-email,1991-02-03,not-a-number
+customer_id,mail,birth_date,amount
+123,test@gmail.com,01/01/1990,25.5
+124,invalid-email,1991-02-03,not-a-number

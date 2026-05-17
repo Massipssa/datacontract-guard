@@ -1,0 +1,46 @@
+name: customers_contract
+version: 1.0.0
+owner: customer-data
+columns:
+  - name: customer_id
+    type: long
+    required: true
+    description: Customer key used for joins
+  - name: email
+    type: string
+    required: true
+    pattern: ^[^@]+@[^@]+\.[^@]+$
+    description: Customer email used by privacy controls
+  - name: birth_date
+    type: date
+    required: true
+    format: "%Y-%m-%d"
+    description: Birth date in ISO format
+  - name: amount
+    type: double
+    required: true
+    min: 0
+    description: Positive customer amount
+name: customers_contract
+version: 1.0.0
+owner: customer-data
+columns:
+  - name: customer_id
+    type: long
+    required: true
+    description: Customer key used for joins
+  - name: email
+    type: string
+    required: true
+    pattern: ^[^@]+@[^@]+\.[^@]+$
+    description: Customer email used by privacy controls
+  - name: birth_date
+    type: date
+    required: true
+    format: "%Y-%m-%d"
+    description: Birth date in ISO format
+  - name: amount
+    type: double
+    required: true
+    min: 0
+    description: Positive customer amount

@@ -1,0 +1,40 @@
+name: customer_profile_contract
+version: 1.0.0
+owner: data-platform
+columns:
+  - name: customer_id
+    type: long
+    required: true
+    description: Stable customer identifier
+  - name: email
+    type: string
+    required: true
+    description: Customer email address
+  - name: signup_ts
+    type: timestamp
+    required: true
+    description: Signup timestamp in UTC
+  - name: country
+    type: string
+    required: false
+    description: ISO country code
+name: customer_profile_contract
+version: 1.0.0
+owner: data-platform
+columns:
+  - name: customer_id
+    type: long
+    required: true
+    description: Stable customer identifier
+  - name: email
+    type: string
+    required: true
+    description: Customer email address
+  - name: signup_ts
+    type: timestamp
+    required: true
+    description: Signup timestamp in UTC
+  - name: country
+    type: string
+    required: false
+    description: ISO country code
