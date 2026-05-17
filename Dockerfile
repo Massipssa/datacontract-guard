@@ -9,6 +9,8 @@ ENV DATA_CONTRACT_ALLOWED_ROOTS=/app
 
 COPY . .
 
+RUN pip install --no-cache-dir .
+
 EXPOSE 8093
 
-CMD ["python", "api_server.py", "--host", "0.0.0.0", "--port", "8093"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8093"]

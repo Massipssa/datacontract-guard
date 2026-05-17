@@ -18,6 +18,7 @@ class AgentRun:
     analysis: dict[str, Any]
     recommendations: list[str]
     generated_code: list[dict[str, object]]
+    llm_explanation: dict[str, str]
     steps: list[AgentStep]
     source_schema: Schema
     contract: DataContract
@@ -31,6 +32,7 @@ class AgentRun:
             "analysis": self.analysis,
             "recommendations": self.recommendations,
             "generatedCode": self.generated_code,
+            "llmExplanation": self.llm_explanation,
         }
 
 
@@ -88,13 +90,14 @@ class AgentOrchestrator:
         steps.append(quality_result.step)
 
         report_result = ReportGeneratorAgent().build(schema_comparison.report, quality_result.report)
-        steps.append(report_result.step)
+        steps.extend(report_result.steps)
 
         return AgentRun(
             report=report_result.report,
             analysis=report_result.analysis,
             recommendations=report_result.recommendations,
             generated_code=[snippet.as_dict() for snippet in report_result.generated_code],
+            llm_explanation=report_result.llm_explanation.as_dict(),
             steps=steps,
             source_schema=schema_result.schema,
             contract=contract_result.contract,

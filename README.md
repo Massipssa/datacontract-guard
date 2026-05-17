@@ -1,11 +1,15 @@
-# Data Contract Agent
+# DataContract Guard
 
-Validate a source schema against a YAML data contract before a pipeline publishes
-breaking changes.
+Validate incoming data before it breaks your pipelines.
 
-This project is designed for data engineers who want a usable enterprise
-guardrail in CI, Airflow, ingestion jobs, API workflows, or pre-deployment
-checks.
+**DataContract Guard** is an AI-assisted Data Quality / Data Contract agent for
+data engineers. It checks CSV, JSON, Parquet, and contract metadata before data
+is appended to Spark, warehouse, or Iceberg pipelines.
+
+Promise:
+
+> Validate received data against your contract, understand the drift, and get a
+> remediation plan before ingestion.
 
 The agent does more than technical validation:
 
@@ -13,24 +17,9 @@ The agent does more than technical validation:
 2. it connects weak signals, such as `email` missing while `mail` is present;
 3. it explains the likely cause, business impact, and correction plan.
 
-## Functional Architecture
+![DataContract Guard architecture](docs/assets/datacontract-guard-architecture.svg)
 
-```text
-User / API
-   |
-   v
-Agent Orchestrator
-   |
-   +--> Schema Agent   --> Infer Schema
-   +--> Quality Agent  --> Run row-level checks
-   +--> Contract Agent --> Compare YAML contract
-   |
-   v
-Report Generator
-   |
-   v
-Report + recommendations + generated PySpark code
-```
+## Functional Architecture
 
 The runtime is intentionally split into agents:
 
@@ -39,6 +28,33 @@ The runtime is intentionally split into agents:
 - `Contract Agent`: loads the YAML contract and detects schema drift;
 - `Quality Agent`: validates nulls, formats, patterns, domains, and business rules;
 - `Report Generator`: merges findings, explains impact, recommends fixes, and generates code.
+- `LLM Explanation Agent`: turns the JSON report into a clear explanation,
+  business impact, proposed correction, and supplier message.
+
+## Why This Is Different
+
+Classic validators stop at facts such as `Column email is missing`.
+
+DataContract Guard turns those facts into an operational diagnosis:
+
+- it detects that `email` is missing and `mail` is suspiciously similar;
+- it explains that the producer probably renamed the field without versioning the contract;
+- it links the issue to Spark failures, Iceberg append risk, joins on `customer_id`, finance dashboards, and PII controls;
+- it proposes concrete actions, not just errors;
+- it generates remediation code that a data engineer can adapt directly in Spark.
+
+The deterministic engine remains the source of truth for `PASS` / `FAIL`. The
+agent layer explains, prioritizes, and recommends.
+
+## Report Screenshots
+
+Failure report:
+
+![DataContract Guard failure report](docs/assets/report-failure-screenshot.svg)
+
+Generated Spark remediation:
+
+![Generated Spark remediation](docs/assets/spark-code-screenshot.svg)
 
 ## What It Does
 
@@ -56,12 +72,18 @@ The runtime is intentionally split into agents:
 - detects numeric business rules such as `min` and `max`;
 - explains probable causes and business impact;
 - proposes corrections;
-- generates JSON or Markdown reports.
+- generates JSON or Markdown reports with remediation code.
 
 ## Project Tree
 
 ```text
-data-contract-agent/
+datacontract-guard/
+  app/
+    main.py                 FastAPI application
+    routes/
+      validations.py        POST /validate endpoint
+    services/
+      validation_service.py upload handling and validation service
   contract_agent/
     agents/
       orchestrator.py   functional agent orchestration
@@ -70,6 +92,7 @@ data-contract-agent/
       contract_agent.py contract loading and comparison agent
       report_agent.py   final report and recommendations agent
       code_generator.py PySpark remediation snippets
+      llm_explanation_agent.py explain report JSON without changing PASS/FAIL
     core/
       agent.py          contract comparison use case
       data_quality.py   row-level quality checks
@@ -100,6 +123,11 @@ data-contract-agent/
     customers_contract.yaml
     customers_bad.csv
     evaluation_cases.json
+  docs/
+    assets/
+      datacontract-guard-architecture.svg
+      report-failure-screenshot.svg
+      spark-code-screenshot.svg
   tests/
   Dockerfile
   docker-compose.yml
@@ -196,6 +224,94 @@ The agent explains that:
 - Spark jobs, Iceberg appends, joins on `customer_id`, finance dashboards, and
   privacy controls can be impacted.
 
+## Complete Example: CSV KO -> Report -> Spark Code
+
+Input file received from a producer:
+
+```csv
+customer_id,mail,birth_date,amount
+,test@gmail.com,01/01/1990,25.5
+,second@gmail.com,1990-01-02,-3
+789,third@gmail.com,1990-02-03,-1
+```
+
+Expected contract:
+
+```yaml
+name: customers_contract
+version: 1.0.0
+owner: customer-data
+columns:
+  - name: customer_id
+    type: long
+    required: true
+  - name: email
+    type: string
+    required: true
+    pattern: ^[^@]+@[^@]+\.[^@]+$
+  - name: birth_date
+    type: date
+    required: true
+    format: "%Y-%m-%d"
+  - name: amount
+    type: double
+    required: true
+    min: 0
+```
+
+Run DataContract Guard:
+
+```powershell
+python -B -m contract_agent.cli `
+  --source-schema .\examples\customers_bad.csv `
+  --contract .\examples\customers_contract.yaml `
+  --source-name customers
+```
+
+Report excerpt:
+
+```text
+Dataset: customers
+Status: FAIL
+
+Problems detected:
+1. Required column "email" is missing. Similar column "mail" is present.
+2. "birth_date" contains an invalid format. Expected: %Y-%m-%d.
+3. 2 null values were detected in required column "customer_id".
+4. "amount" contains values below the minimum 0.
+
+Impact:
+- Spark or Iceberg append can fail.
+- Joins on customer_id can produce wrong metrics.
+- Finance dashboards can be wrong because amount contains negative values.
+- PII controls may miss the renamed email field.
+
+Recommended correction:
+- Rename mail to email, or update the contract if this change is intentional.
+- Convert birth_date to yyyy-MM-dd before ingestion.
+- Quarantine rows where customer_id is empty.
+- Reject rows where amount is lower than 0.
+```
+
+Generated Spark remediation:
+
+```python
+from pyspark.sql.functions import col, trim, to_date
+
+df = df.withColumnRenamed("mail", "email")
+df = df.withColumn("birth_date", to_date(col("birth_date"), "yyyy-MM-dd"))
+
+invalid_customer_id = df.filter(
+    col("customer_id").isNull() | (trim(col("customer_id")) == "")
+)
+valid_customer_id = df.filter(
+    col("customer_id").isNotNull() & (trim(col("customer_id")) != "")
+)
+
+valid_amount = valid_customer_id.filter(col("amount") >= 0)
+invalid_amount = valid_customer_id.filter(col("amount") < 0)
+```
+
 ## Contract Format
 
 ```yaml
@@ -267,6 +383,11 @@ Each API or JSON CLI response contains:
 - `analysis.correctionPlan`: recommended remediation steps;
 - `recommendations`: flattened action plan;
 - `generatedCode`: PySpark snippets to fix or quarantine bad data.
+- `llmExplanation`: clear explanation, business impact, proposed correction,
+  and a supplier-facing message.
+
+`llmExplanation.status` is copied from the deterministic validation engine. The
+LLM Explanation Agent is not allowed to calculate or override `PASS` / `FAIL`.
 
 Example explanation:
 
@@ -276,6 +397,14 @@ Il est probable que le producteur ait renommé "email" en "mail".
 Risque que les contrôles RGPD/PII ne s'appliquent plus au bon champ.
 Renommer "mail" en "email" ou mettre à jour le contrat si le changement est volontaire.
 ```
+
+## Documentation
+
+Project documentation and architecture diagrams are kept under the `docs/` folder:
+
+- [Architecture overview](docs/ARCHITECTURE.md)
+- [Data model and schema](docs/SCHEMA.md)
+
 
 ## CI Gate
 
@@ -325,7 +454,34 @@ resolved from the first allowed root. In production, inject
 
 ## API
 
-Start the local API:
+Start the FastAPI application:
+
+```powershell
+uvicorn app.main:app --host 127.0.0.1 --port 8093 --reload
+```
+
+Validate an uploaded file:
+
+```bash
+curl -X POST http://127.0.0.1:8093/validate \
+  -F "data_file=@examples/customers_bad.csv" \
+  -F "contract_file=@examples/customers_contract.yaml" \
+  -F "source_name=customers"
+```
+
+`POST /validate` accepts multipart form data:
+
+- `data_file`: CSV, JSON, or Parquet file to validate;
+- `contract_file`: YAML, YML, or JSON contract;
+- `source_name`: dataset name shown in the report.
+
+It returns a `ValidationReport` with:
+
+- `status`, `counts`, `issues`, `corrections`;
+- `analysis`, `recommendations`, `generatedCode`;
+- `agent.steps`, `trace`, and `cost`.
+
+Legacy dependency-free API:
 
 ```powershell
 python -B .\api_server.py --host 127.0.0.1 --port 8093

@@ -1,5 +1,5 @@
 services:
-  data-contract-agent:
+  datacontract-guard:
     build: .
     ports:
       - "8093:8093"

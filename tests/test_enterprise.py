@@ -7,6 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from contract_agent.agents.llm_explanation_agent import LLMExplanationAgent
 from contract_agent.agents.orchestrator import AgentOrchestrator, AgentRunRequest
 from contract_agent.api.http import evaluate_request
 from contract_agent.enterprise.runtime import evaluate_files
@@ -68,6 +69,9 @@ class EnterpriseRuntimeTests(unittest.TestCase):
 
         self.assertEqual("orchestrated_multi_agent", payload["agent"]["mode"])
         self.assertTrue(any(item["language"] == "pyspark" for item in payload["generatedCode"]))
+        self.assertEqual("FAIL", payload["llmExplanation"]["status"])
+        self.assertEqual("validation_engine", payload["llmExplanation"]["statusSource"])
+        self.assertIn("supplierMessage", payload["llmExplanation"])
 
     def test_orchestrator_runs_specialized_agents(self):
         run = AgentOrchestrator().run(
@@ -84,7 +88,32 @@ class EnterpriseRuntimeTests(unittest.TestCase):
         self.assertIn("Contract Agent", step_names)
         self.assertIn("Quality Agent", step_names)
         self.assertIn("Report Generator", step_names)
+        self.assertIn("LLM Explanation Agent", step_names)
         self.assertTrue(any(snippet["language"] == "pyspark" for snippet in run.generated_code))
+
+    def test_llm_explanation_agent_cannot_override_engine_status(self):
+        report_payload = {
+            "source": "customers",
+            "status": "FAIL",
+            "analysis": {
+                "problems": ["email is missing"],
+                "impacts": ["PII checks may be skipped"],
+                "correctionPlan": ["rename mail to email"],
+            },
+        }
+
+        result = LLMExplanationAgent(
+            provider=lambda _: {
+                "status": "PASS",
+                "explanation": "Everything is fine",
+                "businessImpact": "No impact",
+                "proposedCorrection": "No fix",
+                "supplierMessage": "Accepted",
+            }
+        ).generate(report_payload)
+
+        self.assertEqual("FAIL", result.explanation.status)
+        self.assertEqual("validation_engine", result.explanation.status_source)
 
     def test_api_request_uses_guardrails(self):
         payload = evaluate_request(

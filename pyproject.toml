@@ -1,12 +1,17 @@
 [project]
 name = "data-contract-agent"
 version = "0.1.0"
-description = "Starter agent for validating source schemas against YAML data contracts."
+description = "AI-assisted Data Quality and Data Contract guard for incoming data."
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+  "fastapi",
+  "python-multipart",
+  "uvicorn[standard]",
+]
 
 [project.optional-dependencies]
 parquet = ["pyarrow"]
+vector = ["chromadb", "sentence-transformers"]
 
 [project.scripts]
 data-contract-agent = "contract_agent.cli:main"

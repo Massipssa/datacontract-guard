@@ -15,6 +15,9 @@ class Settings:
     api_key: str
     log_level: str
     max_data_rows: int = 1000
+    docs_path: Path | None = None
+    vector_store_path: Path | None = None
+    enable_vector_store: bool = False
 
     @classmethod
     def from_env(cls, base_dir: Path) -> "Settings":
@@ -29,6 +32,9 @@ class Settings:
             api_key=os.environ.get("DATA_CONTRACT_API_KEY", ""),
             log_level=os.environ.get("DATA_CONTRACT_LOG_LEVEL", "INFO"),
             max_data_rows=int(os.environ.get("DATA_CONTRACT_MAX_DATA_ROWS", "1000")),
+            docs_path=Path(os.environ.get("DATA_CONTRACT_DOCS_PATH", str(base_dir / "docs"))) if os.environ.get("DATA_CONTRACT_DOCS_PATH") or (base_dir / "docs").exists() else None,
+            vector_store_path=Path(os.environ.get("DATA_CONTRACT_VECTOR_STORE_PATH", str(base_dir / ".chroma_store"))),
+            enable_vector_store=(os.environ.get("DATA_CONTRACT_ENABLE_VECTOR_STORE", "false").strip().lower() in {"1", "true", "yes"}),
         )
 
 

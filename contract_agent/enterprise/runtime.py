@@ -24,6 +24,7 @@ class EvaluationResult:
         payload["analysis"] = self.agent.analysis
         payload["recommendations"] = self.agent.recommendations
         payload["generatedCode"] = self.agent.generated_code
+        payload["llmExplanation"] = self.agent.llm_explanation
         payload["agent"] = self.agent.as_dict()
         payload["trace"] = self.trace.as_dict()
         payload["cost"] = self.cost.as_dict()
