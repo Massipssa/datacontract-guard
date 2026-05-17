@@ -1,0 +1,18 @@
+services:
+  data-contract-agent:
+    build: .
+    ports:
+      - "8093:8093"
+    env_file:
+      - .env.example
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      DATA_CONTRACT_ENV: container
+      DATA_CONTRACT_ALLOWED_ROOTS: /app
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

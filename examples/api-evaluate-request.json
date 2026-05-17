@@ -1,0 +1,8 @@
+{
+  "sourceSchemaPath": "examples/source_schema.json",
+  "contractPath": "examples/customer_contract.yaml",
+  "validateData": true,
+  "sourceName": "bronze.customer_profile",
+  "allowSafePromotion": true,
+  "warnExtraColumns": true
+}
