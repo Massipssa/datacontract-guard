@@ -34,6 +34,7 @@ class ReportGeneratorAgent:
         self,
         schema_report: ContractReport,
         quality_report: ContractReport | None,
+        mcp_adapter: Any | None = None,
     ) -> ReportAgentResult:
         report = merge_reports(schema_report, quality_report)
         analysis = explain_report(report)
@@ -53,6 +54,7 @@ class ReportGeneratorAgent:
         except Exception:
             retriever = None
 
+        # pass MCP adapter to explanation agent so it can emit alerts or fetch extra content if needed
         llm_result = LLMExplanationAgent(retriever=retriever).generate(report_payload)
         report_step = ok_step(
             self.name,

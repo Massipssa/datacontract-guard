@@ -1,4 +1,0 @@
-customer_id,mail,birth_date,amount
-,test@gmail.com,01/01/1990,25.5
-,second@gmail.com,1990-01-02,-3
-789,third@gmail.com,1990-02-03,-1

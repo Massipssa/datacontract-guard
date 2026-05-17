@@ -18,6 +18,8 @@ class Settings:
     docs_path: Path | None = None
     vector_store_path: Path | None = None
     enable_vector_store: bool = False
+    mcp_url: str | None = None
+    mcp_token: str | None = None
 
     @classmethod
     def from_env(cls, base_dir: Path) -> "Settings":
@@ -35,6 +37,8 @@ class Settings:
             docs_path=Path(os.environ.get("DATA_CONTRACT_DOCS_PATH", str(base_dir / "docs"))) if os.environ.get("DATA_CONTRACT_DOCS_PATH") or (base_dir / "docs").exists() else None,
             vector_store_path=Path(os.environ.get("DATA_CONTRACT_VECTOR_STORE_PATH", str(base_dir / ".chroma_store"))),
             enable_vector_store=(os.environ.get("DATA_CONTRACT_ENABLE_VECTOR_STORE", "false").strip().lower() in {"1", "true", "yes"}),
+            mcp_url=os.environ.get("DATA_CONTRACT_MCP_URL", None),
+            mcp_token=os.environ.get("DATA_CONTRACT_MCP_TOKEN", None),
         )
 
 

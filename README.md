@@ -356,6 +356,37 @@ or your platform parser.
 }
 ```
 
+## Configuration and Settings
+
+Runtime configuration is provided via environment variables and centralized by
+the `Settings` dataclass (`contract_agent.enterprise.settings.Settings`). For
+full details see the Settings documentation: [docs/SETTINGS.md](docs/SETTINGS.md#L1-L1).
+
+Minimal example with MCP (Managed Connector Proxy)
+
+```powershell
+# point to your MCP server and provide a bearer token
+$env:DATA_CONTRACT_MCP_URL = 'https://mcp.internal.example'
+$env:DATA_CONTRACT_MCP_TOKEN = 's3cr3t-token'
+
+python -B -m contract_agent.cli `
+  --source-schema 'datasource.table' `
+  --contract 'repo:contracts/customer_contract.yaml'
+```
+
+Optional vector store (for LLM explanation enrichment)
+
+```powershell
+# enable and configure local Chroma store
+$env:DATA_CONTRACT_ENABLE_VECTOR_STORE = 'true'
+$env:DATA_CONTRACT_DOCS_PATH = '.\docs'
+$env:DATA_CONTRACT_VECTOR_STORE_PATH = '.\.chroma_store'
+
+# install optional extras before using vector features
+pip install -e .[vector]
+```
+
+
 ## Correction Examples
 
 The agent can propose actions such as:

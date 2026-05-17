@@ -40,18 +40,41 @@ def evaluate_files(
     warn_extra_columns: bool = True,
     data_path: str | None = None,
     validate_data: bool = True,
+    mcp_adapter: Any | None = None,
 ) -> EvaluationResult:
     logger = logging.getLogger("data_contract_agent")
     trace = Trace()
-    source_path = resolve_allowed_path(source_schema_path, settings)
-    contract_resolved_path = resolve_allowed_path(contract_path, settings)
-    data_resolved_path = resolve_allowed_path(data_path, settings) if data_path and validate_data else None
+    # Resolve local files when possible; if MCP adapter is provided and resolution fails,
+    # keep the original string so agents can ask MCP for resources.
+    try:
+        source_path = resolve_allowed_path(source_schema_path, settings)
+    except Exception:
+        source_path = source_schema_path
+
+    try:
+        contract_resolved_path = resolve_allowed_path(contract_path, settings)
+    except Exception:
+        contract_resolved_path = contract_path
+
+    try:
+        data_resolved_path = resolve_allowed_path(data_path, settings) if data_path and validate_data else None
+    except Exception:
+        data_resolved_path = data_path
     trace.span(
         "paths.resolved",
         source=str(source_path),
         contract=str(contract_resolved_path),
         data=str(data_resolved_path) if data_resolved_path else None,
     )
+
+    # Build MCP adapter from settings if not provided
+    if mcp_adapter is None and getattr(settings, "mcp_url", None):
+        try:
+            from contract_agent.adapters.mcp_adapter import MCPAdapter
+
+            mcp_adapter = MCPAdapter(settings.mcp_url, token=getattr(settings, "mcp_token", None))
+        except Exception:
+            mcp_adapter = None
 
     agent_run = AgentOrchestrator().run(
         AgentRunRequest(
@@ -63,6 +86,7 @@ def evaluate_files(
             max_data_rows=settings.max_data_rows,
             allow_safe_promotion=allow_safe_promotion,
             warn_extra_columns=warn_extra_columns,
+            mcp_adapter=mcp_adapter,
         )
     )
     trace.span(

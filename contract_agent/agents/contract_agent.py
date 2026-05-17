@@ -24,8 +24,20 @@ class ContractCompareResult:
 class ContractAgent:
     name = "Contract Agent"
 
-    def load(self, contract_path: Path) -> ContractLoadResult:
-        contract = read_contract(contract_path)
+    def load(self, contract_path: Path | str, mcp_adapter: Any | None = None) -> ContractLoadResult:
+        # If contract_path is a string and mcp_adapter is provided, fetch content from MCP
+        if isinstance(contract_path, str) and mcp_adapter is not None:
+            try:
+                content = mcp_adapter.get_contract(contract_path)
+                from contract_agent.adapters.mini_yaml import parse_contract_yaml
+                from contract_agent.core.contract import contract_from_mapping
+
+                contract = contract_from_mapping(parse_contract_yaml(content))
+            except Exception:
+                # if MCP fails, raise to signal inability to load contract
+                raise
+        else:
+            contract = read_contract(contract_path) if isinstance(contract_path, Path) else read_contract(Path(str(contract_path)))
         step = ok_step(
             self.name,
             "YAML contract loaded and normalized.",

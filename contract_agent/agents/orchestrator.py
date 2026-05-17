@@ -38,14 +38,15 @@ class AgentRun:
 
 @dataclass(frozen=True)
 class AgentRunRequest:
-    source_path: Path
-    contract_path: Path
+    source_path: Path | str
+    contract_path: Path | str
     source_name: str | None = None
     data_path: Path | None = None
     validate_data: bool = True
     max_data_rows: int = 1000
     allow_safe_promotion: bool = True
     warn_extra_columns: bool = True
+    mcp_adapter: Any | None = None
 
 
 class AgentOrchestrator:
@@ -62,11 +63,11 @@ class AgentOrchestrator:
             )
         ]
 
-        schema_result = SchemaAgent().infer(request.source_path, request.source_name)
+        schema_result = SchemaAgent().infer(request.source_path, request.source_name, mcp_adapter=request.mcp_adapter)
         steps.append(schema_result.step)
 
         contract_agent = ContractAgent()
-        contract_result = contract_agent.load(request.contract_path)
+        contract_result = contract_agent.load(request.contract_path, mcp_adapter=request.mcp_adapter)
         steps.append(contract_result.step)
 
         schema_comparison = contract_agent.compare(
@@ -89,7 +90,7 @@ class AgentOrchestrator:
         )
         steps.append(quality_result.step)
 
-        report_result = ReportGeneratorAgent().build(schema_comparison.report, quality_result.report)
+        report_result = ReportGeneratorAgent().build(schema_comparison.report, quality_result.report, mcp_adapter=request.mcp_adapter)
         steps.extend(report_result.steps)
 
         return AgentRun(
