@@ -21,7 +21,7 @@ A change in code should not accidentally change:
 ## Run Evaluation
 
 ```bash
-python -B -m contract_agent.evaluation --eval-file examples/evaluation_cases.json
+python -B -m contract_agent.evaluation --eval-file examples/requests/evaluation_cases.json
 ```
 
 ---

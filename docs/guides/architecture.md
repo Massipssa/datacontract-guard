@@ -2,32 +2,93 @@
 
 DataContract Guard is designed as a modular validation system with an agent-style runtime.
 
-The core principle is simple:
+The goal of the architecture is simple:
 
-> The deterministic validation engine decides `PASS` or `FAIL`. The agent layer explains, prioritizes, and recommends.
+- validate data contracts in a deterministic way;
+- explain validation issues clearly;
+- generate actionable remediation recommendations;
+- integrate easily with CLI, API, Docker, CI/CD and future UI workflows.
 
----
+> The deterministic validation engine is the source of truth.  
+> The agent layer explains, prioritizes and recommends.
 
-## High-Level Flow
+## 1. High-Level Architecture
 
-```text
-User / API / CLI
-      ↓
-Agent Orchestrator
-      ├── Schema Agent
-      ├── Contract Agent
-      ├── Quality Agent
-      ├── LLM Explanation Agent
-      └── Report Generator
-      ↓
-Validation Report + Recommendations + PySpark Fix
+```mermaid
+flowchart TD
+    User[User / Developer / CI-CD] --> Entry[CLI / API / Future UI]
+
+    Entry --> Orchestrator[Agent Orchestrator]
+
+    Orchestrator --> SchemaAgent[Schema Agent]
+    Orchestrator --> ContractAgent[Contract Agent]
+    Orchestrator --> QualityAgent[Quality Agent]
+    Orchestrator --> ReportAgent[Report Generator]
+    Orchestrator --> LLM[LLM Explanation Agent]
+
+    SchemaAgent --> Engine[Deterministic Validation Engine]
+    ContractAgent --> Engine
+    QualityAgent --> Engine
+
+    Engine --> Decision{Validation Status}
+    Decision -->|PASS| PassReport[Validation Report: PASS]
+    Decision -->|FAIL| FailReport[Validation Report: FAIL]
+
+    LLM --> Explanation[Explanation / Root Cause / Recommendations]
+    ReportAgent --> FinalReport[Final JSON / Markdown Report]
+
+    PassReport --> FinalReport
+    FailReport --> FinalReport
+    Explanation --> FinalReport
 ```
 
 ---
 
-## Components
+## 2. Runtime Validation Flow
 
-### Agent Orchestrator
+```mermaid
+sequenceDiagram
+    actor User
+    participant CLI as CLI / API
+    participant Orchestrator as Agent Orchestrator
+    participant Schema as Schema Agent
+    participant Contract as Contract Agent
+    participant Quality as Quality Agent
+    participant Engine as Validation Engine
+    participant LLM as LLM Explanation Agent
+    participant Report as Report Generator
+
+    User->>CLI: Submit data + contract
+    CLI->>Orchestrator: Start validation request
+
+    Orchestrator->>Schema: Read or infer received schema
+    Schema-->>Orchestrator: Actual schema
+
+    Orchestrator->>Contract: Parse YAML contract
+    Contract-->>Orchestrator: Expected schema + rules
+
+    Orchestrator->>Quality: Prepare data quality checks
+    Quality-->>Orchestrator: Quality rule definitions
+
+    Orchestrator->>Engine: Run deterministic validation
+    Engine-->>Orchestrator: PASS / FAIL + issues
+
+    alt Issues found
+        Orchestrator->>LLM: Explain issues and suggest fixes
+        LLM-->>Orchestrator: Explanation + remediation plan
+    else No issues
+        Orchestrator->>LLM: Optional success summary
+        LLM-->>Orchestrator: Success explanation
+    end
+
+    Orchestrator->>Report: Build final report
+    Report-->>CLI: JSON / Markdown report
+    CLI-->>User: Validation result
+```
+
+## 3. Components
+
+### a. Agent Orchestrator
 
 Coordinates the validation workflow.
 
@@ -40,9 +101,7 @@ Responsibilities:
 - Merge results into a final report
 - Keep execution traces
 
----
-
-### Schema Agent
+### b. Schema Agent
 
 Responsible for understanding the received data structure.
 
@@ -54,9 +113,7 @@ Responsibilities:
 - Extract column names and detected types
 - Provide basic profiling metadata
 
----
-
-### Contract Agent
+### c. Contract Agent
 
 Responsible for reading and validating the expected contract.
 
@@ -67,9 +124,7 @@ Responsibilities:
 - Normalize contract column definitions
 - Extract expected types and quality rules
 
----
-
-### Quality Agent
+### d. Quality Agent
 
 Responsible for applying data quality rules.
 
@@ -82,9 +137,7 @@ Responsibilities:
 - Check min/max values
 - Check date and timestamp formats
 
----
-
-### LLM Explanation Agent
+### e. LLM Explanation Agent
 
 Optional component used to enrich deterministic validation output.
 
@@ -98,9 +151,7 @@ Responsibilities:
 
 Important: this agent must not be the source of truth for validation status.
 
----
-
-### Report Generator
+### f. Report Generator
 
 Responsible for formatting validation results.
 
@@ -111,8 +162,6 @@ Responsibilities:
 - Summarize issues
 - Add recommendations
 - Add generated remediation code
-
----
 
 ## Recommended Package Structure
 

@@ -2,13 +2,6 @@
   "name": "bronze.customer_profile",
   "columns": [
     { "name": "customer_id", "type": "string" },
-    { "name": "email", "type": "string" }
-  ]
-}
-{
-  "name": "bronze.customer_profile",
-  "columns": [
-    { "name": "customer_id", "type": "string" },
     { "name": "email", "type": "string" },
     { "name": "created_at", "type": "timestamp" },
     { "name": "marketing_opt_in", "type": "boolean" }

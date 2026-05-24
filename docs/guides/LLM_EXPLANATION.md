@@ -2,8 +2,6 @@
 
 The LLM Explanation Agent enriches deterministic validation output with human-readable explanations, impact analysis, and remediation plans.
 
----
-
 ## Core Principle
 
 The LLM does not decide whether the dataset passes or fails.
@@ -12,8 +10,6 @@ The LLM does not decide whether the dataset passes or fails.
 Deterministic Engine → PASS / FAIL
 LLM Explanation Agent → Explanation / Impact / Recommendation
 ```
-
----
 
 ## Responsibilities
 
@@ -26,8 +22,6 @@ The LLM Explanation Agent can:
 - Generate PySpark or SQL correction examples
 - Generate provider communication messages
 - Generate pull request descriptions
-
----
 
 ## Input
 
@@ -50,8 +44,6 @@ Example:
 }
 ```
 
----
-
 ## Output
 
 ```json
@@ -73,8 +65,6 @@ Example:
 }
 ```
 
----
-
 ## Example Prompt Template
 
 ```text
@@ -94,8 +84,6 @@ Validation report:
 {{validation_report_json}}
 ```
 
----
-
 ## LLM Disabled Mode
 
 When LLM is disabled, the system should still return:
@@ -106,8 +94,6 @@ When LLM is disabled, the system should still return:
 - generated code from rule-based templates
 
 This makes the project usable without external API keys.
-
----
 
 ## Safe Usage
 
